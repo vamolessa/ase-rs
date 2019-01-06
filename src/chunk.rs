@@ -1,5 +1,5 @@
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::io::{Read, Result};
+use std::io::{self, Read, Seek};
 
 mod cel_chunk;
 pub use self::cel_chunk::*;
@@ -44,15 +44,32 @@ pub enum ChunkVariant {
 pub struct Chunk {
 	pub chunk_size: u32,
 	pub chunk_type: u16,
-	pub chunk_data: Vec<u8>,
+	pub chunk_data: ChunkVariant,
 }
 
 impl Chunk {
-	pub fn read<R: Read>(read: &mut R) -> Result<Self> {
+	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
+	where
+		R: Read + Seek,
+	{
+		let chunk_size = read.read_u32::<LittleEndian>()?;
+		let chunk_type = read.read_u16::<LittleEndian>()?;
+
+		let chunk_data = match chunk_type {
+			0x0004 => ChunkVariant::OldPaletteChunk4(OldPaletteChunk4::from_read(read)?),
+			0x0011 => ChunkVariant::OldPaletteChunk11(OldPaletteChunk11::from_read(read)?),
+			_ => {
+				return Err(io::Error::new(
+					io::ErrorKind::Other,
+					format!("Invalid Chunk Type {}", chunk_type),
+				));
+			}
+		};
+
 		let chunk = Chunk {
-			chunk_size: read.read_u32::<LittleEndian>()?,
-			chunk_type: read.read_u16::<LittleEndian>()?,
-			chunk_data: Vec::new(), //read.read_u16::<LittleEndian>()?,
+			chunk_size,
+			chunk_type,
+			chunk_data,
 		};
 
 		Ok(chunk)

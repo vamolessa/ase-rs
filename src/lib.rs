@@ -9,6 +9,12 @@ pub use self::frame::*;
 mod chunk;
 pub use self::chunk::*;
 
+mod color;
+pub use self::color::*;
+
+mod helpers;
+pub use self::helpers::*;
+
 /*
 https://github.com/aseprite/aseprite/blob/master/docs/ase-file-specs.md
 

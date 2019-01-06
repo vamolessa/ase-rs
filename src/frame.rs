@@ -1,4 +1,5 @@
 use byteorder::{LittleEndian, ReadBytesExt};
+
 use std::io::{self, Read, Seek, SeekFrom};
 
 pub struct Frame {
@@ -9,24 +10,22 @@ pub struct Frame {
 }
 
 impl Frame {
-	pub fn read<R>(stream: &mut R) -> io::Result<Self>
+	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
 	where
 		R: Read + Seek,
 	{
-		let byte_count = stream.read_u32::<LittleEndian>()?;
-		stream.seek(SeekFrom::Current(2))?;
-		let number_of_chunks_old = stream.read_u16::<LittleEndian>()?;
-		let frame_duration_milliseconds = stream.read_u16::<LittleEndian>()?;
-		stream.seek(SeekFrom::Current(2))?;
-		let number_of_chunks_new = stream.read_u32::<LittleEndian>()?;
+		let byte_count = read.read_u32::<LittleEndian>()?;
+		read.seek(SeekFrom::Current(2))?;
+		let number_of_chunks_old = read.read_u16::<LittleEndian>()?;
+		let frame_duration_milliseconds = read.read_u16::<LittleEndian>()?;
+		read.seek(SeekFrom::Current(2))?;
+		let number_of_chunks_new = read.read_u32::<LittleEndian>()?;
 
-		let frame = Frame {
+		Ok(Self {
 			byte_count,
 			number_of_chunks_old,
 			frame_duration_milliseconds,
 			number_of_chunks_new,
-		};
-
-		Ok(frame)
+		})
 	}
 }
