@@ -26,7 +26,7 @@ pub use self::slice_chunk::*;
 mod user_data_chunk;
 pub use self::user_data_chunk::*;
 
-pub enum ChunkVariant {
+pub enum ChunkData {
 	CelChunk(CelChunk),
 	CelExtraChunk(CelExtraChunk),
 	ColorProfileChunk(ColorProfileChunk),
@@ -43,8 +43,7 @@ pub enum ChunkVariant {
 
 pub struct Chunk {
 	pub chunk_size: u32,
-	pub chunk_type: u16,
-	pub chunk_data: ChunkVariant,
+	pub chunk_data: ChunkData,
 }
 
 impl Chunk {
@@ -54,10 +53,11 @@ impl Chunk {
 	{
 		let chunk_size = read.read_u32::<LittleEndian>()?;
 		let chunk_type = read.read_u16::<LittleEndian>()?;
-
 		let chunk_data = match chunk_type {
-			0x0004 => ChunkVariant::OldPaletteChunk4(OldPaletteChunk4::from_read(read)?),
-			0x0011 => ChunkVariant::OldPaletteChunk11(OldPaletteChunk11::from_read(read)?),
+			0x0004 => ChunkData::OldPaletteChunk4(OldPaletteChunk4::from_read(read)?),
+			0x0011 => ChunkData::OldPaletteChunk11(OldPaletteChunk11::from_read(read)?),
+			0x2004 => ChunkData::LayerChunk(LayerChunk::from_read(read)?),
+			0x2005 => ChunkData::CelChunk(CelChunk::from_read(read, chunk_size)?),
 			_ => {
 				return Err(io::Error::new(
 					io::ErrorKind::Other,
@@ -68,7 +68,6 @@ impl Chunk {
 
 		let chunk = Chunk {
 			chunk_size,
-			chunk_type,
 			chunk_data,
 		};
 

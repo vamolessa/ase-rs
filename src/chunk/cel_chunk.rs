@@ -1,11 +1,24 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Seek, SeekFrom};
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
-pub enum CelType {
-	RawCel { width: u16, height: u16,  },
-	LinkedCel,
-	CompressedImage,
+use crate::color::Pixels;
+use crate::helpers::read_bytes;
+
+pub enum Cel {
+	RawCel {
+		width: u16,
+		height: u16,
+		pixels: Pixels,
+	},
+	LinkedCel {
+		frame_position: u16,
+	},
+	CompressedImage {
+		width: u16,
+		height: u16,
+		zlib_compressed_data: Vec<u8>,
+	},
 }
 
 pub struct CelChunk {
@@ -13,44 +26,68 @@ pub struct CelChunk {
 	pub x_position: i16,
 	pub y_position: i16,
 	pub opacity_level: u8,
-	pub cel_type: u16,
+	pub cel: Cel,
 }
 
 impl CelChunk {
-	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
+	pub fn from_read<R>(read: &mut R, chunk_size: u32) -> io::Result<Self>
 	where
-		R: Read,
+		R: Read + Seek,
 	{
-		let number_of_packets = read.read_u16::<LittleEndian>()?;
-		let mut packets = Vec::new();
+		let chunk_start = read.seek(SeekFrom::Current(0))?;
 
-		for _ in 0..number_of_packets {
-			let palette_entries_to_skip = read.read_u8()?;
+		let layer_index = read.read_u16::<LittleEndian>()?;
+		let x_position = read.read_i16::<LittleEndian>()?;
+		let y_position = read.read_i16::<LittleEndian>()?;
+		let opacity_level = read.read_u8()?;
+		let cel_type = read.read_u16::<LittleEndian>()?;
 
-			let mut number_of_colors = read.read_u8()? as usize;
-			if number_of_colors == 0 {
-				number_of_colors = 256;
+		let cel = match cel_type {
+			0 => {
+				let width = read.read_u16::<LittleEndian>()?;
+				let height = read.read_u16::<LittleEndian>()?;
+
+				let pixels_size =
+					chunk_start + chunk_size as u64 - read.seek(SeekFrom::Current(0))?;
+				let pixels = Pixels::rgba_from_read(read, pixels_size as usize)?;
+
+				Cel::RawCel {
+					width,
+					height,
+					pixels,
+				}
 			}
+			1 => Cel::LinkedCel {
+				frame_position: read.read_u16::<LittleEndian>()?,
+			},
+			2 => {
+				let width = read.read_u16::<LittleEndian>()?;
+				let height = read.read_u16::<LittleEndian>()?;
 
-			let mut colors = Vec::with_capacity(number_of_colors);
+				let data_size =
+					chunk_start + chunk_size as u64 - read.seek(SeekFrom::Current(0))?;
+				let zlib_compressed_data = read_bytes(read, data_size as usize)?;
 
-			for _ in 0..number_of_colors {
-				colors.push(RGB256 {
-					r: read.read_u8()?,
-					g: read.read_u8()?,
-					b: read.read_u8()?,
-				})
+				Cel::CompressedImage {
+					width,
+					height,
+					zlib_compressed_data,
+				}
 			}
-
-			packets.push(Packet {
-				palette_entries_to_skip,
-				colors,
-			});
-		}
+			_ => {
+				return Err(io::Error::new(
+					io::ErrorKind::Other,
+					format!("Invalid Cel Type {}", cel_type),
+				));
+			}
+		};
 
 		Ok(Self {
-			number_of_packets,
-			packets,
+			layer_index,
+			x_position,
+			y_position,
+			opacity_level,
+			cel,
 		})
 	}
 }
