@@ -1,6 +1,8 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::io::{self, Read, Seek};
 
+use crate::Header;
+
 mod cel_chunk;
 pub use self::cel_chunk::*;
 mod cel_extra_chunk;
@@ -47,7 +49,7 @@ pub struct Chunk {
 }
 
 impl Chunk {
-	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
+	pub fn from_read<R>(read: &mut R, header: &Header) -> io::Result<Self>
 	where
 		R: Read + Seek,
 	{
@@ -57,7 +59,7 @@ impl Chunk {
 			0x0004 => ChunkData::OldPaletteChunk4(OldPaletteChunk4::from_read(read)?),
 			0x0011 => ChunkData::OldPaletteChunk11(OldPaletteChunk11::from_read(read)?),
 			0x2004 => ChunkData::LayerChunk(LayerChunk::from_read(read)?),
-			0x2005 => ChunkData::CelChunk(CelChunk::from_read(read, chunk_size)?),
+			0x2005 => ChunkData::CelChunk(CelChunk::from_read(read, chunk_size, header)?),
 			_ => {
 				return Err(io::Error::new(
 					io::ErrorKind::Other,

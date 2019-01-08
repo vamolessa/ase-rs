@@ -4,6 +4,7 @@ use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::color::Pixels;
 use crate::helpers::read_bytes;
+use crate::{ColorDepth, Header};
 
 pub enum Cel {
 	RawCel {
@@ -30,7 +31,7 @@ pub struct CelChunk {
 }
 
 impl CelChunk {
-	pub fn from_read<R>(read: &mut R, chunk_size: u32) -> io::Result<Self>
+	pub fn from_read<R>(read: &mut R, chunk_size: u32, header: &Header) -> io::Result<Self>
 	where
 		R: Read + Seek,
 	{
@@ -49,7 +50,13 @@ impl CelChunk {
 
 				let pixels_size =
 					chunk_start + chunk_size as u64 - read.seek(SeekFrom::Current(0))?;
-				let pixels = Pixels::rgba_from_read(read, pixels_size as usize)?;
+				let pixels = match header.color_depth {
+					ColorDepth::Indexed => Pixels::indexed_from_read(read, pixels_size as usize)?,
+					ColorDepth::Grayscale => {
+						Pixels::grayscale_from_read(read, pixels_size as usize)?
+					}
+					ColorDepth::RGBA => Pixels::rgba_from_read(read, pixels_size as usize)?,
+				};
 
 				Cel::RawCel {
 					width,

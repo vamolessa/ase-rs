@@ -37,14 +37,15 @@ impl Pixels {
 	where
 		R: Read,
 	{
-		if pixels_size % 4 != 0 {
+		const BYTES_PER_PIXEL: usize = 4;
+		if pixels_size % BYTES_PER_PIXEL != 0 {
 			return Err(io::Error::new(
 				io::ErrorKind::Other,
-				format!("Pixels Size is not multiple of 4: {}", pixels_size),
+				format!("Pixels Size is not multiple of 4 (RGBA): {}", pixels_size),
 			));
 		}
 
-		let pixel_count = pixels_size / 4;
+		let pixel_count = pixels_size / BYTES_PER_PIXEL;
 		let mut pixels = Vec::with_capacity(pixel_count);
 
 		for _ in 0..pixel_count {
@@ -57,5 +58,47 @@ impl Pixels {
 		}
 
 		Ok(Pixels::RGBA(pixels))
+	}
+
+	pub fn grayscale_from_read<R>(read: &mut R, pixels_size: usize) -> io::Result<Self>
+	where
+		R: Read,
+	{
+		const BYTES_PER_PIXEL: usize = 2;
+		if pixels_size % BYTES_PER_PIXEL != 0 {
+			return Err(io::Error::new(
+				io::ErrorKind::Other,
+				format!(
+					"Pixels Size is not multiple of 2 (Grayscale): {}",
+					pixels_size
+				),
+			));
+		}
+
+		let pixel_count = pixels_size / BYTES_PER_PIXEL;
+		let mut pixels = Vec::with_capacity(pixel_count);
+
+		for _ in 0..pixel_count {
+			pixels.push(Grayscale {
+				v: read.read_u8()?,
+				a: read.read_u8()?,
+			});
+		}
+
+		Ok(Pixels::Grayscale(pixels))
+	}
+
+	pub fn indexed_from_read<R>(read: &mut R, pixels_size: usize) -> io::Result<Self>
+	where
+		R: Read,
+	{
+		let index_count = pixels_size;
+		let mut indices = Vec::with_capacity(index_count);
+
+		for _ in 0..index_count {
+			indices.push(read.read_u8()?);
+		}
+
+		Ok(Pixels::Indexed(indices))
 	}
 }

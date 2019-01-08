@@ -2,6 +2,15 @@ use std::io::{self, Read, Seek, SeekFrom};
 
 use bitflags::bitflags;
 use byteorder::{LittleEndian, ReadBytesExt};
+use num_enum::CustomTryInto;
+
+#[derive(Eq, PartialEq, CustomTryInto)]
+#[repr(u16)]
+pub enum ColorDepth {
+	Indexed = 8,
+	Grayscale = 16,
+	RGBA = 32,
+}
 
 bitflags! {
 	pub struct Flags: u32 {
@@ -14,7 +23,7 @@ pub struct Header {
 	pub frames: u16,
 	pub width_in_pixels: u16,
 	pub height_in_pixels: u16,
-	pub color_depth: u16,
+	pub color_depth: ColorDepth,
 	pub flags: Flags,
 	pub transparent_palette_entry: u8,
 	pub number_of_colors: u16,
@@ -32,7 +41,10 @@ impl Header {
 		let frames = read.read_u16::<LittleEndian>()?;
 		let width_in_pixels = read.read_u16::<LittleEndian>()?;
 		let height_in_pixels = read.read_u16::<LittleEndian>()?;
-		let color_depth = read.read_u16::<LittleEndian>()?;
+		let color_depth = read
+			.read_u16::<LittleEndian>()?
+			.try_into_ColorDepth()
+			.map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 		let flags = Flags::from_bits_truncate(read.read_u32::<LittleEndian>()?);
 		read.seek(SeekFrom::Current(2 + 4 + 4))?;
 		let transparent_palette_entry = read.read_u8()?;
