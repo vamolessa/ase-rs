@@ -29,18 +29,18 @@ mod user_data_chunk;
 pub use self::user_data_chunk::*;
 
 pub enum ChunkData {
+	OldPaletteChunk4(OldPaletteChunk4),
+	OldPaletteChunk11(OldPaletteChunk11),
+	LayerChunk(LayerChunk),
 	CelChunk(CelChunk),
 	CelExtraChunk(CelExtraChunk),
 	ColorProfileChunk(ColorProfileChunk),
-	FrameTagsChunk(FrameTagsChunk),
-	LayerChunk(LayerChunk),
 	MaskChunk(MaskChunk),
-	OldPaletteChunk4(OldPaletteChunk4),
-	OldPaletteChunk11(OldPaletteChunk11),
-	PaletteChunk(PaletteChunk),
 	PathChunk(PathChunk),
-	SliceChunk(SliceChunk),
+	FrameTagsChunk(FrameTagsChunk),
+	PaletteChunk(PaletteChunk),
 	UserDataChunk(UserDataChunk),
+	SliceChunk(SliceChunk),
 }
 
 pub struct Chunk {
@@ -64,6 +64,10 @@ impl Chunk {
 			0x2007 => ChunkData::ColorProfileChunk(ColorProfileChunk::from_read(read)?),
 			0x2016 => ChunkData::MaskChunk(MaskChunk::from_read(read)?),
 			0x2017 => ChunkData::PathChunk(PathChunk::from_read(read, chunk_size)?),
+			0x2018 => ChunkData::FrameTagsChunk(FrameTagsChunk::from_read(read)?),
+			0x2019 => ChunkData::PaletteChunk(PaletteChunk::from_read(read)?),
+			0x2020 => ChunkData::UserDataChunk(UserDataChunk::from_read(read)?),
+			0x2022 => ChunkData::SliceChunk(SliceChunk::from_read(read)?),
 			_ => {
 				return Err(io::Error::new(
 					io::ErrorKind::Other,

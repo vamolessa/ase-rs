@@ -14,21 +14,21 @@ pub struct RGB64 {
 	pub b: u8,
 }
 
-pub struct RGBA {
+pub struct RGBA256 {
 	pub r: u8,
 	pub g: u8,
 	pub b: u8,
 	pub a: u8,
 }
 
-pub struct Grayscale {
+pub struct Grayscale256 {
 	pub v: u8,
 	pub a: u8,
 }
 
 pub enum Pixels {
-	RGBA(Vec<RGBA>),
-	Grayscale(Vec<Grayscale>),
+	RGBA(Vec<RGBA256>),
+	Grayscale(Vec<Grayscale256>),
 	Indexed(Vec<u8>),
 }
 
@@ -49,7 +49,7 @@ impl Pixels {
 		let mut pixels = Vec::with_capacity(pixel_count);
 
 		for _ in 0..pixel_count {
-			pixels.push(RGBA {
+			pixels.push(RGBA256 {
 				r: read.read_u8()?,
 				g: read.read_u8()?,
 				b: read.read_u8()?,
@@ -79,7 +79,7 @@ impl Pixels {
 		let mut pixels = Vec::with_capacity(pixel_count);
 
 		for _ in 0..pixel_count {
-			pixels.push(Grayscale {
+			pixels.push(Grayscale256 {
 				v: read.read_u8()?,
 				a: read.read_u8()?,
 			});
