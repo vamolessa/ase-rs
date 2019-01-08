@@ -60,6 +60,10 @@ impl Chunk {
 			0x0011 => ChunkData::OldPaletteChunk11(OldPaletteChunk11::from_read(read)?),
 			0x2004 => ChunkData::LayerChunk(LayerChunk::from_read(read)?),
 			0x2005 => ChunkData::CelChunk(CelChunk::from_read(read, chunk_size, header)?),
+			0x2006 => ChunkData::CelExtraChunk(CelExtraChunk::from_read(read)?),
+			0x2007 => ChunkData::ColorProfileChunk(ColorProfileChunk::from_read(read)?),
+			0x2016 => ChunkData::MaskChunk(MaskChunk::from_read(read)?),
+			0x2017 => ChunkData::PathChunk(PathChunk::from_read(read, chunk_size)?),
 			_ => {
 				return Err(io::Error::new(
 					io::ErrorKind::Other,
