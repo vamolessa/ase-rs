@@ -31,7 +31,7 @@ pub struct CelChunk {
 }
 
 impl CelChunk {
-	pub fn from_read<R>(read: &mut R, chunk_size: u32, header: &Header) -> io::Result<Self>
+	pub fn from_read<R>(read: &mut R, chunk_data_size: u32, header: &Header) -> io::Result<Self>
 	where
 		R: Read + Seek,
 	{
@@ -49,7 +49,7 @@ impl CelChunk {
 				let height = read.read_u16::<LittleEndian>()?;
 
 				let pixels_size =
-					chunk_start + chunk_size as u64 - read.seek(SeekFrom::Current(0))?;
+					chunk_start + chunk_data_size as u64 - read.seek(SeekFrom::Current(0))?;
 				let pixels = match header.color_depth {
 					ColorDepth::Indexed => Pixels::indexed_from_read(read, pixels_size as usize)?,
 					ColorDepth::Grayscale => {
@@ -72,7 +72,7 @@ impl CelChunk {
 				let height = read.read_u16::<LittleEndian>()?;
 
 				let data_size =
-					chunk_start + chunk_size as u64 - read.seek(SeekFrom::Current(0))?;
+					chunk_start + chunk_data_size as u64 - read.seek(SeekFrom::Current(0))?;
 				let zlib_compressed_data = read_bytes(read, data_size as usize)?;
 
 				Cel::CompressedImage {

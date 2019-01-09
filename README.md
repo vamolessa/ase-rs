@@ -1,2 +1,2 @@
 # ase-rs
-Rust library to parse Aseprite *.ase files
+Rust library to parse Aseprite *.aseprite files
