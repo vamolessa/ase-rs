@@ -3,6 +3,12 @@ name = "ase"
 version = "0.1.0"
 authors = ["Matheus Lessa <matheus@fastmail.com>"]
 edition = "2018"
+description = "Rust library to parse Aseprite *ase. files"
+keywords = ["ase", "Aseprite", "Pixel"]
+license = "MIT"
+documentation = "..."
+homepage = "https://github.com/matheuslessarodrigues/ase-rs"
+repository = "https://github.com/matheuslessarodrigues/ase-rs"
 
 [dependencies]
 byteorder = "1"
