@@ -6,7 +6,7 @@ edition = "2018"
 description = "Rust library to parse Aseprite *ase. files"
 keywords = ["ase", "Aseprite", "Pixel"]
 license = "MIT"
-documentation = "..."
+documentation = "https://docs.rs/https://docs.rs/ase"
 homepage = "https://github.com/matheuslessarodrigues/ase-rs"
 repository = "https://github.com/matheuslessarodrigues/ase-rs"
 
