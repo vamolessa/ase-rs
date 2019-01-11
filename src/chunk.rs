@@ -1,5 +1,5 @@
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek};
 
 use crate::Header;
 
@@ -29,7 +29,6 @@ mod user_data_chunk;
 pub use self::user_data_chunk::*;
 
 pub enum ChunkData {
-	Empty,
 	OldPaletteChunk4(OldPaletteChunk4),
 	OldPaletteChunk11(OldPaletteChunk11),
 	LayerChunk(LayerChunk),
@@ -72,12 +71,10 @@ impl Chunk {
 			0x2020 => ChunkData::UserDataChunk(UserDataChunk::from_read(read)?),
 			0x2022 => ChunkData::SliceChunk(SliceChunk::from_read(read)?),
 			_ => {
-				println!(
-					"chunk_data_size: {} (on chunk 0x{:X}",
-					chunk_data_size, chunk_type
-				);
-				read.seek(SeekFrom::Current(chunk_data_size as i64))?;
-				ChunkData::Empty
+				return Err(io::Error::new(
+					io::ErrorKind::Other,
+					format!("Invalid Chunk Type 0x{:X}", chunk_type),
+				));
 			}
 		};
 

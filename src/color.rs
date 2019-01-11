@@ -41,7 +41,7 @@ impl Pixels {
 		if pixels_size % BYTES_PER_PIXEL != 0 {
 			return Err(io::Error::new(
 				io::ErrorKind::Other,
-				format!("Pixels Size is not multiple of 4 (RGBA): {}", pixels_size),
+				format!("Pixels size is not multiple of 4 (RGBA): {}", pixels_size),
 			));
 		}
 
@@ -69,7 +69,7 @@ impl Pixels {
 			return Err(io::Error::new(
 				io::ErrorKind::Other,
 				format!(
-					"Pixels Size is not multiple of 2 (Grayscale): {}",
+					"Pixels size is not multiple of 2 (Grayscale): {}",
 					pixels_size
 				),
 			));

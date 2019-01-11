@@ -1,4 +1,4 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Seek, SeekFrom};
 
 use bitflags::bitflags;
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -44,10 +44,11 @@ pub struct SliceChunk {
 impl SliceChunk {
 	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
 	where
-		R: Read,
+		R: Read + Seek,
 	{
 		let number_of_slice_keys = read.read_u32::<LittleEndian>()?;
 		let flags = Flags::from_bits_truncate(read.read_u32::<LittleEndian>()?);
+		read.seek(SeekFrom::Current(4))?;
 		let name = read_string(read)?;
 		let mut keys = Vec::with_capacity(number_of_slice_keys as usize);
 		for _ in 0..number_of_slice_keys {
