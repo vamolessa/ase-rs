@@ -1,10 +1,10 @@
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
 use bitflags::bitflags;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use num_enum::CustomTryInto;
 
-use crate::helpers::read_string;
+use crate::helpers::{read_string, write_string};
 
 bitflags! {
 	pub struct Flags: u16 {
@@ -18,14 +18,14 @@ bitflags! {
 	}
 }
 
-#[derive(Eq, PartialEq, CustomTryInto)]
+#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum LayerType {
 	Normal = 0,
 	Group = 1,
 }
 
-#[derive(Eq, PartialEq, CustomTryInto)]
+#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum BlendMode {
 	Normal = 0,
@@ -87,4 +87,22 @@ impl LayerChunk {
 			layer_name,
 		})
 	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_u16::<LittleEndian>(self.flags.bits)?;
+		wtr.write_u16::<LittleEndian>(self.layer_type as u16)?;
+		wtr.write_u16::<LittleEndian>(self.layer_child_level)?;
+		wtr.seek(SeekFrom::Current(2 + 2))?;
+		wtr.write_u16::<LittleEndian>(self.blend_mode as u16)?;
+		wtr.write_u8(self.opacity)?;
+
+		wtr.seek(SeekFrom::Current(3))?;
+		write_string(wtr, &self.layer_name)?;
+
+		Ok(())
+	}
+
 }

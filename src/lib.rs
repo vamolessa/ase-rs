@@ -1,4 +1,4 @@
-use std::io::{self, Read, Seek};
+use std::io::{self, Read, Seek, Write};
 
 mod header;
 pub use self::header::*;
@@ -50,5 +50,16 @@ impl Aseprite {
 		}
 
 		Ok(Self { header, frames })
+	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		self.header.write(wtr)?;
+		for frame in &self.frames {
+			frame.write(wtr)?;
+		}
+		Ok(())
 	}
 }

@@ -14,13 +14,13 @@ BYTE[8]     For future (set to zero)
 	STRING  Color name
 	*/
 
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
 use bitflags::bitflags;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::color::RGBA256;
-use crate::helpers::read_string;
+use crate::helpers::{read_string, write_string};
 
 bitflags! {
 	pub struct Flags: u16 {
@@ -80,4 +80,32 @@ impl PaletteChunk {
 			palette_entries,
 		})
 	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_u32::<LittleEndian>(self.new_palette_size)?;
+		wtr.write_u32::<LittleEndian>(self.first_color_index_to_change)?;
+		wtr.write_u32::<LittleEndian>(self.last_color_index_to_change)?;
+		wtr.seek(SeekFrom::Current(8))?;
+		for pal in &self.palette_entries {
+			if pal.flags.contains(Flags::HasName) && pal.color_name.is_none() {
+				return Err(io::Error::new(
+					io::ErrorKind::InvalidData,
+					"Flag HasName is 1 but col_name is None".to_owned()
+				));
+			}
+			wtr.write_u16::<LittleEndian>(pal.flags.bits)?;
+			wtr.write_u8(pal.color.r)?;
+			wtr.write_u8(pal.color.g)?;
+			wtr.write_u8(pal.color.b)?;
+			wtr.write_u8(pal.color.a)?;
+			if let Some(name) = &pal.color_name {
+				write_string(wtr, &name)?
+			}
+		}
+		Ok(())
+	}
+
 }

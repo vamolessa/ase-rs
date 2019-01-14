@@ -1,10 +1,10 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
 use bitflags::bitflags;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::color::RGBA256;
-use crate::helpers::read_string;
+use crate::helpers::{read_string, write_string};
 
 bitflags! {
 	pub struct Flags: u32 {
@@ -43,4 +43,43 @@ impl UserDataChunk {
 
 		Ok(Self { flags, text, color })
 	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write,
+	{
+		wtr.write_u32::<LittleEndian>(self.flags.bits)?;
+		if self.flags.contains(Flags::HasText) {
+			match &self.text {
+				None => {
+					return Err(io::Error::new(
+						io::ErrorKind::InvalidData,
+						"Flag `HasText` is 1 but `text` is None".to_owned()
+					));
+				}
+				Some(text) => {
+					write_string(wtr, &text)?;
+				}
+			}
+		}
+		if self.flags.contains(Flags::HasColor) {
+			match &self.color {
+				None => {
+					return Err(io::Error::new(
+						io::ErrorKind::InvalidData,
+						"Flag `HasColor` is 1 but `color` is None".to_owned()
+					));
+				}
+				Some(color) => {
+					wtr.write_u8(color.r)?;
+					wtr.write_u8(color.g)?;
+					wtr.write_u8(color.b)?;
+					wtr.write_u8(color.a)?;
+				}
+			}
+		}
+		Ok(())
+	}
+
 }
+

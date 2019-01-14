@@ -1,6 +1,6 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 pub fn read_bytes<R>(read: &mut R, length: usize) -> io::Result<Vec<u8>>
 where
@@ -19,4 +19,13 @@ where
 	let length = read.read_u16::<LittleEndian>()? as usize;
 	let bytes = read_bytes(read, length)?;
 	String::from_utf8(bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+}
+
+pub fn write_string<W>(wtr: &mut W, string: &str) -> io::Result<()>
+where
+	W: Write,
+{
+	wtr.write_u16::<LittleEndian>(string.len() as u16)?;
+	wtr.write(&string.as_bytes())?;
+	Ok(())
 }

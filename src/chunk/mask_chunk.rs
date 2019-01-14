@@ -1,8 +1,8 @@
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::helpers::{read_bytes, read_string};
+use crate::helpers::{read_bytes, read_string, write_string};
 
 pub struct MaskChunk {
 	pub x_position: i16,
@@ -35,4 +35,19 @@ impl MaskChunk {
 			bitmap_data,
 		})
 	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_i16::<LittleEndian>(self.x_position)?;
+		wtr.write_i16::<LittleEndian>(self.y_position)?;
+		wtr.write_u16::<LittleEndian>(self.width)?;
+		wtr.write_u16::<LittleEndian>(self.height)?;
+		wtr.seek(SeekFrom::Current(8))?;
+		write_string(wtr, &self.mask_name)?;
+		wtr.write(&self.bitmap_data)?;
+		Ok(())
+	}
+
 }

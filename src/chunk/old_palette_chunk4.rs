@@ -1,6 +1,6 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Write, Seek};
 
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::color::RGB256;
 
@@ -51,4 +51,21 @@ impl OldPaletteChunk4 {
 			packets,
 		})
 	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_u16::<LittleEndian>(self.number_of_packets)?;
+		for packet in &self.packets {
+			wtr.write_u8(packet.palette_entries_to_skip)?;
+			for color in &packet.colors {
+				wtr.write_u8(color.r)?;
+				wtr.write_u8(color.g)?;
+				wtr.write_u8(color.b)?;
+			}
+		}
+		Ok(())
+	}
+
 }

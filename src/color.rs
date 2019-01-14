@@ -1,6 +1,6 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
-use byteorder::ReadBytesExt;
+use byteorder::{ReadBytesExt, WriteBytesExt};
 
 pub struct RGB256 {
 	pub r: u8,
@@ -101,4 +101,32 @@ impl Pixels {
 
 		Ok(Pixels::Indexed(indices))
 	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write,
+	{
+		use self::Pixels::*;
+		match self {
+			RGBA(cols) => {
+				for col in cols.iter() {
+					wtr.write_u8(col.r)?;
+					wtr.write_u8(col.g)?;
+					wtr.write_u8(col.b)?;
+					wtr.write_u8(col.a)?;
+				}
+			}
+			Grayscale(cols) => {
+				for col in cols.iter() {
+					wtr.write_u8(col.v)?;
+					wtr.write_u8(col.a)?;
+				}
+			}
+			Indexed(indices) => {
+				wtr.write(indices)?;
+			}
+		}
+		Ok(())
+	}
+
 }

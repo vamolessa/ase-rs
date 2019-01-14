@@ -1,12 +1,12 @@
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
 use bitflags::bitflags;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use num_enum::CustomTryInto;
 
 use crate::helpers::read_bytes;
 
-#[derive(Eq, PartialEq, CustomTryInto)]
+#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum ProfileType {
 	None = 0,
@@ -53,5 +53,17 @@ impl ColorProfileChunk {
 			fixed_gamma,
 			icc_profile,
 		})
+	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_u16::<LittleEndian>(self.profile_type as u16)?;
+		wtr.write_u16::<LittleEndian>(self.flags.bits)?;
+		wtr.write_f32::<LittleEndian>(self.fixed_gamma)?;
+		wtr.seek(SeekFrom::Current(8))?;
+		wtr.write(&self.icc_profile)?;
+		Ok(())
 	}
 }

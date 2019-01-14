@@ -1,9 +1,9 @@
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
 use bitflags::bitflags;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::helpers::read_string;
+use crate::helpers::{read_string, write_string};
 
 bitflags! {
 	pub struct Flags: u32 {
@@ -93,5 +93,50 @@ impl SliceChunk {
 			name,
 			keys,
 		})
+	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_u32::<LittleEndian>(self.number_of_slice_keys)?;
+		wtr.write_u32::<LittleEndian>(self.flags.bits)?;
+		wtr.seek(SeekFrom::Current(4))?;
+		write_string(wtr, &self.name)?;
+		for key in &self.keys {
+			wtr.write_u32::<LittleEndian>(key.frame_number)?;
+			wtr.write_i32::<LittleEndian>(key.x_origin)?;
+			wtr.write_i32::<LittleEndian>(key.y_origin)?;
+			wtr.write_u32::<LittleEndian>(key.width)?;
+			wtr.write_u32::<LittleEndian>(key.height)?;
+			if self.flags.contains(Flags::IsNinePatchesSlice) {
+				match key.nine_patches_info {
+					None => return Err(io::Error::new(
+						io::ErrorKind::InvalidData,
+						"Flag `IsNinePatchesSlice` is 1 but `nine_patches_info` is None".to_owned()
+					)),
+					Some(NinePatchesInfo { x_position, y_position, width, height }) => {
+						wtr.write_i32::<LittleEndian>(x_position)?;
+						wtr.write_i32::<LittleEndian>(y_position)?;
+						wtr.write_u32::<LittleEndian>(width)?;
+						wtr.write_u32::<LittleEndian>(height)?;
+					}
+				}
+			}
+			if self.flags.contains(Flags::HasPivotInformation) {
+				match key.pivot_info {
+					None => return Err(io::Error::new(
+						io::ErrorKind::InvalidData,
+						"Flag `HasPivotInformation` is 1 but `pivot_info` is None".to_owned()
+					)),
+					Some(PivotInfo { x_position, y_position }) => {
+						wtr.write_i32::<LittleEndian>(x_position)?;
+						wtr.write_i32::<LittleEndian>(y_position)?;
+					}
+				}
+			}
+		}
+
+		Ok(())
 	}
 }

@@ -1,6 +1,6 @@
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::color::Pixels;
 use crate::helpers::read_bytes;
@@ -96,5 +96,38 @@ impl CelChunk {
 			opacity_level,
 			cel,
 		})
+	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_u16::<LittleEndian>(self.layer_index)?;
+		wtr.write_i16::<LittleEndian>(self.x_position)?;
+		wtr.write_i16::<LittleEndian>(self.y_position)?;
+		wtr.write_u8(self.opacity_level)?;
+		let cel_type = match self.cel {
+			Cel::RawCel {..} => 0,
+			Cel::LinkedCel {..} => 1,
+			Cel::CompressedImage {..} => 2,
+		};
+		wtr.write_u16::<LittleEndian>(cel_type)?;
+		match &self.cel {
+			Cel::RawCel { width, height, pixels } => {
+				wtr.write_u16::<LittleEndian>(*width)?;
+				wtr.write_u16::<LittleEndian>(*height)?;
+				pixels.write(wtr)?;
+			},
+			Cel::LinkedCel { frame_position } => {
+				wtr.write_u16::<LittleEndian>(*frame_position)?;
+			},
+			Cel::CompressedImage { width, height, zlib_compressed_data } => {
+				wtr.write_u16::<LittleEndian>(*width)?;
+				wtr.write_u16::<LittleEndian>(*height)?;
+				wtr.write(&zlib_compressed_data)?;
+			},
+		}
+
+		Ok(())
 	}
 }

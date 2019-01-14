@@ -1,10 +1,10 @@
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 
 use bitflags::bitflags;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use num_enum::CustomTryInto;
 
-#[derive(Eq, PartialEq, CustomTryInto)]
+#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum ColorDepth {
 	Indexed = 8,
@@ -32,6 +32,9 @@ pub struct Header {
 }
 
 impl Header {
+
+	const MAGIC: u16 = 0xA5E0;
+
 	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
 	where
 		R: Read + Seek,
@@ -66,5 +69,28 @@ impl Header {
 			pixel_width,
 			pixel_height,
 		})
+	}
+
+	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	where
+		W: Write + Seek,
+	{
+		wtr.write_u32::<LittleEndian>(self.file_size)?;
+		wtr.write_u16::<LittleEndian>(Header::MAGIC)?;
+		wtr.seek(SeekFrom::Current(2))?;
+		wtr.write_u16::<LittleEndian>(self.frames)?;
+		wtr.write_u16::<LittleEndian>(self.width_in_pixels)?;
+		wtr.write_u16::<LittleEndian>(self.height_in_pixels)?;
+		wtr.write_u16::<LittleEndian>(self.color_depth as u16)?;
+		wtr.write_u32::<LittleEndian>(self.flags.bits)?;
+		wtr.seek(SeekFrom::Current(2 + 4 + 4))?;
+		wtr.write_u8(self.transparent_palette_entry)?;
+		wtr.seek(SeekFrom::Current(3))?;
+		wtr.write_u16::<LittleEndian>(self.number_of_colors)?;
+		wtr.write_u8(self.pixel_width)?;
+		wtr.write_u8(self.pixel_height)?;
+		wtr.seek(SeekFrom::Current(92))?;
+
+		Ok(())
 	}
 }
