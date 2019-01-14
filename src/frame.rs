@@ -1,9 +1,10 @@
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{self, Read, Seek, SeekFrom, Write, Cursor};
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::{Chunk, Header};
 
+#[derive(Debug)]
 pub struct Frame {
 	pub byte_count: u32,
 	pub frame_duration_milliseconds: u16,
@@ -51,16 +52,19 @@ impl Frame {
 	where
 		W: Write + Seek,
 	{
-		wtr.write_u32::<LittleEndian>(self.byte_count)?;
+		let chunks_buf = vec![];
+		let mut chunks_wtr = Cursor::new(chunks_buf);
+		for chunk in &self.chunks {
+			chunk.write(&mut chunks_wtr)?;
+		}
+
+		wtr.write_u32::<LittleEndian>(16 + chunks_wtr.position() as u32)?;
 		wtr.write_u16::<LittleEndian>(Frame::MAGIC)?;
-		wtr.write_u16::<LittleEndian>(self.number_of_chunks_old)?;
+		wtr.write_u16::<LittleEndian>(self.chunks.len() as u16)?;
 		wtr.write_u16::<LittleEndian>(self.frame_duration_milliseconds)?;
 		wtr.seek(SeekFrom::Current(2))?;
-		wtr.write_u32::<LittleEndian>(self.number_of_chunks)?;
-
-		for chunk in &self.chunks {
-			chunk.write(wtr)?;
-		}
+		wtr.write_u32::<LittleEndian>(self.chunks.len() as u32)?;
+		wtr.write(&chunks_wtr.into_inner())?;
 		Ok(())
 	}
 }

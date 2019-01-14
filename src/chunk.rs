@@ -1,5 +1,5 @@
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use std::io::{self, Read, Seek, Write};
+use std::io::{self, Read, Seek, Write, Cursor};
 
 use crate::Header;
 
@@ -28,6 +28,7 @@ pub use self::slice_chunk::*;
 mod user_data_chunk;
 pub use self::user_data_chunk::*;
 
+#[derive(Debug)]
 pub enum ChunkData {
 	OldPaletteChunk4(OldPaletteChunk4),
 	OldPaletteChunk11(OldPaletteChunk11),
@@ -66,6 +67,7 @@ impl ChunkData {
 	}
 }
 
+#[derive(Debug)]
 pub struct Chunk {
 	pub chunk_size: u32,
 	pub chunk_data: ChunkData,
@@ -113,7 +115,12 @@ impl Chunk {
 	where
 		W: Write + Seek,
 	{
-		wtr.write_u32::<LittleEndian>(self.chunk_size)?;
+		let chunk_buf = vec![];
+		let mut chunk_wtr = Cursor::new(chunk_buf);
+		self.chunk_data.write(&mut chunk_wtr)?;
+		let chunk_size = chunk_wtr.position() as u32;
+
+		wtr.write_u32::<LittleEndian>(6+chunk_size)?;
 		let chunk_type = match self.chunk_data {
 			ChunkData::OldPaletteChunk4(_) => 0x0004,
 			ChunkData::OldPaletteChunk11(_) => 0x0011,
@@ -129,7 +136,8 @@ impl Chunk {
 			ChunkData::SliceChunk(_) => 0x2022,
 		};
 		wtr.write_u16::<LittleEndian>(chunk_type)?;
-		self.chunk_data.write(wtr)?;
+
+		wtr.write(&chunk_wtr.into_inner())?;
 		Ok(())
 	}
 }

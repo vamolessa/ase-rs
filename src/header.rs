@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use num_enum::CustomTryInto;
 
-#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum ColorDepth {
 	Indexed = 8,
@@ -18,6 +18,7 @@ bitflags! {
 	}
 }
 
+#[derive(Debug)]
 pub struct Header {
 	pub file_size: u32,
 	pub frames: u16,
@@ -25,6 +26,7 @@ pub struct Header {
 	pub height_in_pixels: u16,
 	pub color_depth: ColorDepth,
 	pub flags: Flags,
+	pub speed: u16, // deprecated
 	pub transparent_palette_entry: u8,
 	pub number_of_colors: u16,
 	pub pixel_width: u8,
@@ -49,7 +51,8 @@ impl Header {
 			.try_into_ColorDepth()
 			.map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 		let flags = Flags::from_bits_truncate(read.read_u32::<LittleEndian>()?);
-		read.seek(SeekFrom::Current(2 + 4 + 4))?;
+		let speed = read.read_u16::<LittleEndian>()?;
+		read.seek(SeekFrom::Current(4 + 4))?;
 		let transparent_palette_entry = read.read_u8()?;
 		read.seek(SeekFrom::Current(3))?;
 		let number_of_colors = read.read_u16::<LittleEndian>()?;
@@ -64,6 +67,7 @@ impl Header {
 			height_in_pixels,
 			color_depth,
 			flags,
+			speed,
 			transparent_palette_entry,
 			number_of_colors,
 			pixel_width,
@@ -71,19 +75,19 @@ impl Header {
 		})
 	}
 
-	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
+	pub fn write<W>(&self, wtr: &mut W, frame_bytes: u32, frame_len: u16) -> io::Result<()>
 	where
 		W: Write + Seek,
 	{
-		wtr.write_u32::<LittleEndian>(self.file_size)?;
+		wtr.write_u32::<LittleEndian>(128 + frame_bytes)?;
 		wtr.write_u16::<LittleEndian>(Header::MAGIC)?;
-		wtr.seek(SeekFrom::Current(2))?;
-		wtr.write_u16::<LittleEndian>(self.frames)?;
+		wtr.write_u16::<LittleEndian>(frame_len)?;
 		wtr.write_u16::<LittleEndian>(self.width_in_pixels)?;
 		wtr.write_u16::<LittleEndian>(self.height_in_pixels)?;
 		wtr.write_u16::<LittleEndian>(self.color_depth as u16)?;
 		wtr.write_u32::<LittleEndian>(self.flags.bits)?;
-		wtr.seek(SeekFrom::Current(2 + 4 + 4))?;
+		wtr.write_u16::<LittleEndian>(self.speed)?;
+		wtr.seek(SeekFrom::Current(4 + 4))?;
 		wtr.write_u8(self.transparent_palette_entry)?;
 		wtr.seek(SeekFrom::Current(3))?;
 		wtr.write_u16::<LittleEndian>(self.number_of_colors)?;

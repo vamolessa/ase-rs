@@ -4,11 +4,13 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::color::RGB256;
 
+#[derive(Debug)]
 pub struct Packet {
 	pub palette_entries_to_skip: u8,
 	pub colors: Vec<RGB256>,
 }
 
+#[derive(Debug)]
 pub struct OldPaletteChunk4 {
 	pub number_of_packets: u16,
 	pub packets: Vec<Packet>,
@@ -20,6 +22,7 @@ impl OldPaletteChunk4 {
 		R: Read,
 	{
 		let number_of_packets = read.read_u16::<LittleEndian>()?;
+		println!("num_packets: {}", number_of_packets);
 		let mut packets = Vec::new();
 
 		for _ in 0..number_of_packets {
@@ -59,6 +62,7 @@ impl OldPaletteChunk4 {
 		wtr.write_u16::<LittleEndian>(self.number_of_packets)?;
 		for packet in &self.packets {
 			wtr.write_u8(packet.palette_entries_to_skip)?;
+			wtr.write_u8(packet.colors.len() as u8)?;
 			for color in &packet.colors {
 				wtr.write_u8(color.r)?;
 				wtr.write_u8(color.g)?;

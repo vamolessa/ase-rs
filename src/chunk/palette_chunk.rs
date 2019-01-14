@@ -28,12 +28,14 @@ bitflags! {
 	}
 }
 
+#[derive(Debug)]
 pub struct PaletteEntry {
 	pub flags: Flags,
 	pub color: RGBA256,
 	pub color_name: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct PaletteChunk {
 	pub new_palette_size: u32,
 	pub first_color_index_to_change: u32,

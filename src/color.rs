@@ -2,18 +2,21 @@ use std::io::{self, Read, Write};
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
+#[derive(Debug)]
 pub struct RGB256 {
 	pub r: u8,
 	pub g: u8,
 	pub b: u8,
 }
 
+#[derive(Debug)]
 pub struct RGB64 {
 	pub r: u8,
 	pub g: u8,
 	pub b: u8,
 }
 
+#[derive(Debug)]
 pub struct RGBA256 {
 	pub r: u8,
 	pub g: u8,
@@ -21,11 +24,13 @@ pub struct RGBA256 {
 	pub a: u8,
 }
 
+#[derive(Debug)]
 pub struct Grayscale256 {
 	pub v: u8,
 	pub a: u8,
 }
 
+#[derive(Debug)]
 pub enum Pixels {
 	RGBA(Vec<RGBA256>),
 	Grayscale(Vec<Grayscale256>),

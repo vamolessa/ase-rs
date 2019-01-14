@@ -1,4 +1,4 @@
-use std::io::{self, Read, Seek, Write};
+use std::io::{self, Read, Seek, Write, Cursor};
 
 mod header;
 pub use self::header::*;
@@ -33,6 +33,7 @@ PIXEL: One pixel, depending on the image pixel format:
 	Indexed: BYTE, Each pixel uses 1 byte (the index).
 */
 
+#[derive(Debug)]
 pub struct Aseprite {
 	pub header: Header,
 	pub frames: Vec<Frame>,
@@ -56,10 +57,14 @@ impl Aseprite {
 	where
 		W: Write + Seek,
 	{
-		self.header.write(wtr)?;
+		let frames_buf = vec![];
+		let mut frames_wtr = Cursor::new(frames_buf);
 		for frame in &self.frames {
-			frame.write(wtr)?;
+			frame.write(&mut frames_wtr)?;
 		}
+		let body_len = frames_wtr.position() as u32;
+		self.header.write(wtr, body_len, self.frames.len() as u16)?;
+		// wtr.write(&frames_wtr.into_inner())?;
 		Ok(())
 	}
 }

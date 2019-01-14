@@ -4,11 +4,13 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::color::RGB64;
 
+#[derive(Debug)]
 pub struct Packet {
 	pub palette_entries_to_skip: u8,
 	pub colors: Vec<RGB64>,
 }
 
+#[derive(Debug)]
 pub struct OldPaletteChunk11 {
 	pub number_of_packets: u16,
 	pub packets: Vec<Packet>,

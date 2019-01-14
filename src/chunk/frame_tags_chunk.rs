@@ -6,7 +6,7 @@ use num_enum::CustomTryInto;
 use crate::color::RGB256;
 use crate::helpers::{read_string, write_string};
 
-#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u8)]
 pub enum LoopAnimationDirection {
 	Forward = 0,
@@ -14,6 +14,7 @@ pub enum LoopAnimationDirection {
 	PingPong = 2,
 }
 
+#[derive(Debug)]
 pub struct Tag {
 	pub from_tag: u16,
 	pub to_tag: u16,
@@ -22,6 +23,7 @@ pub struct Tag {
 	pub tag_name: String,
 }
 
+#[derive(Debug)]
 pub struct FrameTagsChunk {
 	pub number_of_tags: u16,
 	pub tags: Vec<Tag>,

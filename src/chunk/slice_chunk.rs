@@ -12,6 +12,7 @@ bitflags! {
 	}
 }
 
+#[derive(Debug)]
 pub struct NinePatchesInfo {
 	pub x_position: i32,
 	pub y_position: i32,
@@ -19,11 +20,13 @@ pub struct NinePatchesInfo {
 	pub height: u32,
 }
 
+#[derive(Debug)]
 pub struct PivotInfo {
 	pub x_position: i32,
 	pub y_position: i32,
 }
 
+#[derive(Debug)]
 pub struct SliceKey {
 	pub frame_number: u32,
 	pub x_origin: i32,
@@ -34,6 +37,7 @@ pub struct SliceKey {
 	pub pivot_info: Option<PivotInfo>,
 }
 
+#[derive(Debug)]
 pub struct SliceChunk {
 	pub number_of_slice_keys: u32,
 	pub flags: Flags,

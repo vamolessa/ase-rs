@@ -6,7 +6,7 @@ use num_enum::CustomTryInto;
 
 use crate::helpers::read_bytes;
 
-#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum ProfileType {
 	None = 0,
@@ -20,6 +20,7 @@ bitflags! {
 	}
 }
 
+#[derive(Debug)]
 pub struct ColorProfileChunk {
 	pub profile_type: ProfileType,
 	pub flags: Flags,

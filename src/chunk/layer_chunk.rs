@@ -18,14 +18,14 @@ bitflags! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum LayerType {
 	Normal = 0,
 	Group = 1,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, CustomTryInto)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, CustomTryInto)]
 #[repr(u16)]
 pub enum BlendMode {
 	Normal = 0,
@@ -49,6 +49,7 @@ pub enum BlendMode {
 	Divide = 18,
 }
 
+#[derive(Debug)]
 pub struct LayerChunk {
 	pub flags: Flags,
 	pub layer_type: LayerType,
