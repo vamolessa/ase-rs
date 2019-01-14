@@ -87,7 +87,7 @@ impl PaletteChunk {
 	where
 		W: Write + Seek,
 	{
-		wtr.write_u32::<LittleEndian>(self.new_palette_size)?;
+		wtr.write_u32::<LittleEndian>(self.palette_entries.len() as u32)?;
 		wtr.write_u32::<LittleEndian>(self.first_color_index_to_change)?;
 		wtr.write_u32::<LittleEndian>(self.last_color_index_to_change)?;
 		wtr.seek(SeekFrom::Current(8))?;

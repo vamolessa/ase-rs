@@ -48,6 +48,8 @@ impl Frame {
 		})
 	}
 
+	const PREFER_OLD: bool = true;
+
 	pub fn write<W>(&self, wtr: &mut W) -> io::Result<()>
 	where
 		W: Write + Seek,
@@ -60,10 +62,23 @@ impl Frame {
 
 		wtr.write_u32::<LittleEndian>(16 + chunks_wtr.position() as u32)?;
 		wtr.write_u16::<LittleEndian>(Frame::MAGIC)?;
-		wtr.write_u16::<LittleEndian>(self.chunks.len() as u16)?;
+
+		if Frame::PREFER_OLD {
+			wtr.write_u16::<LittleEndian>(self.chunks.len() as u16)?;
+		} else {
+			wtr.seek(SeekFrom::Current(2))?;
+		}
+
 		wtr.write_u16::<LittleEndian>(self.frame_duration_milliseconds)?;
+
 		wtr.seek(SeekFrom::Current(2))?;
-		wtr.write_u32::<LittleEndian>(self.chunks.len() as u32)?;
+
+		if Frame::PREFER_OLD {
+			wtr.seek(SeekFrom::Current(4))?;
+		} else {
+			wtr.write_u32::<LittleEndian>(self.chunks.len() as u32)?;
+		}
+
 		wtr.write(&chunks_wtr.into_inner())?;
 		Ok(())
 	}
