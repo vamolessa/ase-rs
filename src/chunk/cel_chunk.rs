@@ -1,8 +1,13 @@
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{self, Read, Seek, SeekFrom, Write, Cursor};
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::color::Pixels;
+use std::io::prelude::*;
+use flate2::read::ZlibDecoder;
+
+
+
+use crate::color::{Pixels, RGBA256};
 use crate::helpers::read_bytes;
 use crate::{ColorDepth, Header};
 
@@ -33,6 +38,47 @@ pub struct CelChunk {
 }
 
 impl CelChunk {
+	pub fn new(layer_index: u16, x:i16, y:i16, w:u16, h:u16, pixels: Vec<RGBA256>) -> Self {
+		let cel = Cel::RawCel {
+			width: w,
+			height: h,
+			pixels: Pixels::RGBA(pixels),
+		};
+
+		Self {
+			layer_index,
+			x_position: x,
+			y_position: y,
+			opacity_level: 255,
+			cel,
+		}
+	}
+
+	pub fn inflate(&mut self, color_depth: &ColorDepth) {
+		if let Cel::CompressedImage {zlib_compressed_data, ..} = &self.cel {
+			let mut d = ZlibDecoder::new(&zlib_compressed_data[..]);
+			let mut s = Vec::new();
+			d.read_to_end(&mut s).unwrap();
+			let len = s.len() as u64;
+			let mut rdr = Cursor::new(s);
+			let pixels = CelChunk::read_pixels(&mut rdr, color_depth, len);
+			dbg!(pixels);
+		}
+	}
+
+	fn read_pixels<R>(read: &mut R, color_depth: &ColorDepth, pixels_size: u64) -> io::Result<Pixels>
+	where
+		R: Read + Seek,
+	{
+		match color_depth {
+			ColorDepth::Indexed => Pixels::indexed_from_read(read, pixels_size as usize),
+			ColorDepth::Grayscale => {
+				Pixels::grayscale_from_read(read, pixels_size as usize)
+			}
+			ColorDepth::RGBA => Pixels::rgba_from_read(read, pixels_size as usize),
+		}
+	}
+
 	pub fn from_read<R>(read: &mut R, chunk_data_size: u32, header: &Header) -> io::Result<Self>
 	where
 		R: Read + Seek,
@@ -44,22 +90,15 @@ impl CelChunk {
 		let y_position = read.read_i16::<LittleEndian>()?;
 		let opacity_level = read.read_u8()?;
 		let cel_type = read.read_u16::<LittleEndian>()?;
-
+		read.seek(SeekFrom::Current(7))?;
 		let cel = match cel_type {
 			0 => {
 				let width = read.read_u16::<LittleEndian>()?;
 				let height = read.read_u16::<LittleEndian>()?;
-
 				let pixels_size =
 					chunk_start + chunk_data_size as u64 - read.seek(SeekFrom::Current(0))?;
-				let pixels = match header.color_depth {
-					ColorDepth::Indexed => Pixels::indexed_from_read(read, pixels_size as usize)?,
-					ColorDepth::Grayscale => {
-						Pixels::grayscale_from_read(read, pixels_size as usize)?
-					}
-					ColorDepth::RGBA => Pixels::rgba_from_read(read, pixels_size as usize)?,
-				};
 
+				let pixels = CelChunk::read_pixels(read, &header.color_depth, pixels_size)?;
 				Cel::RawCel {
 					width,
 					height,
@@ -76,7 +115,6 @@ impl CelChunk {
 				let data_size =
 					chunk_start + chunk_data_size as u64 - read.seek(SeekFrom::Current(0))?;
 				let zlib_compressed_data = read_bytes(read, data_size as usize)?;
-
 				Cel::CompressedImage {
 					width,
 					height,
@@ -114,6 +152,7 @@ impl CelChunk {
 			Cel::CompressedImage {..} => 2,
 		};
 		wtr.write_u16::<LittleEndian>(cel_type)?;
+		wtr.seek(SeekFrom::Current(7))?;
 		match &self.cel {
 			Cel::RawCel { width, height, pixels } => {
 				wtr.write_u16::<LittleEndian>(*width)?;
@@ -131,5 +170,24 @@ impl CelChunk {
 		}
 
 		Ok(())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	#[test]
+	fn test_compression() {
+		use super::*;
+		let data = vec![ 120, 156, 99, 96, 160, 61, 48, 72, 104, 250, 15, 194, 228, 232, 33, 21, 83, 170, 159, 24, 243, 209, 253, 66, 11, 183, 34, 203, 17, 19, 86, 248, 194, 153, 20, 119, 208, 42, 94, 240, 217, 75, 200, 95, 184, 220, 70, 138, 95, 41, 177, 139, 20, 63, 80, 98, 23, 169, 97, 70, 75, 127, 81, 219, 46, 92, 242, 212, 14, 67, 100, 49, 98, 210, 55, 185, 118, 145, 147, 14, 168, 237, 47, 90, 165, 67, 92, 118, 225, 83, 71, 172, 61, 196, 216, 69, 138, 89, 164, 218, 69, 110, 153, 64, 142, 60, 41, 128, 158, 118, 161, 3, 0, 164, 249, 126, 89 ];
+		let mut cel = CelChunk {
+			layer_index: 0,
+			x_position: 0,
+			y_position: 0,
+			opacity_level: 255,
+			cel: Cel::CompressedImage { width: 0, height: 0, zlib_compressed_data: data},
+		};
+
+		cel.inflate(&ColorDepth::RGBA);
+
 	}
 }

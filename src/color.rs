@@ -61,7 +61,6 @@ impl Pixels {
 				a: read.read_u8()?,
 			});
 		}
-
 		Ok(Pixels::RGBA(pixels))
 	}
 

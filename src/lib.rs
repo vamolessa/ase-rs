@@ -1,16 +1,16 @@
 use std::io::{self, Read, Seek, Write, Cursor};
 
-mod header;
+pub mod header;
 pub use self::header::*;
 
-mod frame;
+pub mod frame;
 pub use self::frame::*;
 
-mod chunk;
+pub mod chunk;
 pub use self::chunk::*;
 
 pub mod color;
-mod helpers;
+pub mod helpers;
 
 /*
 https://github.com/aseprite/aseprite/blob/master/docs/ase-file-specs.md
@@ -40,6 +40,10 @@ pub struct Aseprite {
 }
 
 impl Aseprite {
+	pub fn new(header: Header, frames: Vec<Frame>) -> Self {
+		Self { header, frames }
+	}
+
 	pub fn from_read<R>(read: &mut R) -> io::Result<Aseprite>
 	where
 		R: Read + Seek,

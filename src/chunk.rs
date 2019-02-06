@@ -3,29 +3,29 @@ use std::io::{self, Read, Seek, Write, Cursor};
 
 use crate::Header;
 
-mod cel_chunk;
+pub mod cel_chunk;
 pub use self::cel_chunk::*;
-mod cel_extra_chunk;
+pub mod cel_extra_chunk;
 pub use self::cel_extra_chunk::*;
-mod color_profile_chunk;
+pub mod color_profile_chunk;
 pub use self::color_profile_chunk::*;
-mod frame_tags_chunk;
+pub mod frame_tags_chunk;
 pub use self::frame_tags_chunk::*;
-mod layer_chunk;
+pub mod layer_chunk;
 pub use self::layer_chunk::*;
-mod mask_chunk;
+pub mod mask_chunk;
 pub use self::mask_chunk::*;
-mod old_palette_chunk4;
+pub mod old_palette_chunk4;
 pub use self::old_palette_chunk4::*;
-mod old_palette_chunk11;
+pub mod old_palette_chunk11;
 pub use self::old_palette_chunk11::*;
-mod palette_chunk;
+pub mod palette_chunk;
 pub use self::palette_chunk::*;
-mod path_chunk;
+pub mod path_chunk;
 pub use self::path_chunk::*;
-mod slice_chunk;
+pub mod slice_chunk;
 pub use self::slice_chunk::*;
-mod user_data_chunk;
+pub mod user_data_chunk;
 pub use self::user_data_chunk::*;
 
 #[derive(Debug)]
@@ -74,6 +74,14 @@ pub struct Chunk {
 }
 
 impl Chunk {
+
+	pub fn new(chunk_data: ChunkData) -> Self {
+		Self {
+			chunk_size: 0,
+			chunk_data
+		}
+	}
+
 	pub fn from_read<R>(read: &mut R, header: &Header) -> io::Result<Self>
 	where
 		R: Read + Seek,

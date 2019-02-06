@@ -21,6 +21,7 @@ pub struct UserDataChunk {
 }
 
 impl UserDataChunk {
+
 	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
 	where
 		R: Read,

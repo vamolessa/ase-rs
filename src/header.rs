@@ -12,9 +12,21 @@ pub enum ColorDepth {
 	RGBA = 32,
 }
 
+impl Default for ColorDepth {
+	fn default() -> Self {
+		ColorDepth::RGBA
+	}
+}
+
 bitflags! {
 	pub struct Flags: u32 {
 		const HasOpacity = 1;
+	}
+}
+
+impl Default for Flags {
+	fn default() -> Self {
+		Flags::HasOpacity
 	}
 }
 
@@ -33,9 +45,36 @@ pub struct Header {
 	pub pixel_height: u8,
 }
 
+impl Default for Header {
+	fn default() -> Self {
+		Header {
+			file_size: 0,
+			frames: 0,
+			width_in_pixels: 0,
+			height_in_pixels: 0,
+			color_depth: Default::default(),
+			flags: Default::default(),
+			speed: 100, // deprecated
+			transparent_palette_entry: 0,
+			number_of_colors: 32,
+			pixel_width: 1,
+			pixel_height: 1
+		}
+	}
+}
+
 impl Header {
 
 	const MAGIC: u16 = 0xA5E0;
+
+	pub fn new(w: u16, h: u16) -> Self {
+		Header {
+			width_in_pixels: w,
+			height_in_pixels: h,
+			..Default::default()
+		}
+	}
+
 
 	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
 	where

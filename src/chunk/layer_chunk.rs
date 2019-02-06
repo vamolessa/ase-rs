@@ -60,6 +60,16 @@ pub struct LayerChunk {
 }
 
 impl LayerChunk {
+	pub fn new(layer_name: &str) -> Self {
+		LayerChunk {
+			flags: Flags::Visible | Flags::Editable,
+			layer_type: LayerType::Normal,
+			layer_child_level: 0,
+			blend_mode: BlendMode::Normal,
+			opacity: 255,
+			layer_name: layer_name.to_owned(),
+		}
+	}
 	pub fn from_read<R>(read: &mut R) -> io::Result<Self>
 	where
 		R: Read + Seek,

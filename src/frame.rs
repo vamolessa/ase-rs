@@ -4,7 +4,7 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::{Chunk, Header};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Frame {
 	pub byte_count: u32,
 	pub frame_duration_milliseconds: u16,
@@ -14,6 +14,19 @@ pub struct Frame {
 }
 
 impl Frame {
+
+	/// create a new default Frame with empty chunks buffer
+	pub fn new() -> Self {
+		Frame {
+			..Default::default()
+		}
+	}
+
+	/// add a chunk to the chunks buffer
+	pub fn add_chunk(&mut self, chunk: Chunk) -> &mut Self {
+		self.chunks.push(chunk);
+		self
+	}
 
 	const MAGIC: u16 = 0xF1FA;
 

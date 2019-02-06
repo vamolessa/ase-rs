@@ -4,7 +4,8 @@ use std::fs;
 
 fn test_read(fname: &str) -> std::io::Result<()> {
 	let mut file = std::fs::File::open(fname)?;
-	Aseprite::from_read(&mut file).map(|_|())
+	let _ = Aseprite::from_read(&mut file)?;
+    Ok(())
 }
 
 fn test_rw(fname: &str) -> std::io::Result<()> {
