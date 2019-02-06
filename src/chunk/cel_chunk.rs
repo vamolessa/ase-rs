@@ -28,6 +28,28 @@ pub enum Cel {
 	},
 }
 
+impl Cel {
+	pub fn pixels(&self, color_depth: &ColorDepth) -> Option<Pixels> {
+		match &self {
+			Cel::CompressedImage {zlib_compressed_data, ..} => {
+				let mut d = ZlibDecoder::new(&zlib_compressed_data[..]);
+				let mut s = Vec::new();
+				d.read_to_end(&mut s).unwrap();
+				let len = s.len() as u64;
+				let mut rdr = Cursor::new(s);
+				let pixels = CelChunk::read_pixels(&mut rdr, color_depth, len);
+				Some(pixels.unwrap().clone())
+			}
+			Cel::RawCel {pixels, ..} => {
+				Some(pixels.clone())
+			}
+			_ => {
+				unimplemented!()
+			}
+		}
+	}
+}
+
 #[derive(Debug)]
 pub struct CelChunk {
 	pub layer_index: u16,
@@ -58,18 +80,6 @@ impl CelChunk {
 			y_position: y,
 			opacity_level: 255,
 			cel,
-		}
-	}
-
-	pub fn inflate(&mut self, color_depth: &ColorDepth) {
-		if let Cel::CompressedImage {zlib_compressed_data, ..} = &self.cel {
-			let mut d = ZlibDecoder::new(&zlib_compressed_data[..]);
-			let mut s = Vec::new();
-			d.read_to_end(&mut s).unwrap();
-			let len = s.len() as u64;
-			let mut rdr = Cursor::new(s);
-			let pixels = CelChunk::read_pixels(&mut rdr, color_depth, len);
-			dbg!(pixels);
 		}
 	}
 
@@ -186,15 +196,9 @@ mod tests {
 	fn test_compression() {
 		use super::*;
 		let data = vec![ 120, 156, 99, 96, 160, 61, 48, 72, 104, 250, 15, 194, 228, 232, 33, 21, 83, 170, 159, 24, 243, 209, 253, 66, 11, 183, 34, 203, 17, 19, 86, 248, 194, 153, 20, 119, 208, 42, 94, 240, 217, 75, 200, 95, 184, 220, 70, 138, 95, 41, 177, 139, 20, 63, 80, 98, 23, 169, 97, 70, 75, 127, 81, 219, 46, 92, 242, 212, 14, 67, 100, 49, 98, 210, 55, 185, 118, 145, 147, 14, 168, 237, 47, 90, 165, 67, 92, 118, 225, 83, 71, 172, 61, 196, 216, 69, 138, 89, 164, 218, 69, 110, 153, 64, 142, 60, 41, 128, 158, 118, 161, 3, 0, 164, 249, 126, 89 ];
-		let mut cel = CelChunk {
-			layer_index: 0,
-			x_position: 0,
-			y_position: 0,
-			opacity_level: 255,
-			cel: Cel::CompressedImage { width: 0, height: 0, zlib_compressed_data: data},
-		};
+		let cel = Cel::CompressedImage { width: 0, height: 0, zlib_compressed_data: data};
 
-		cel.inflate(&ColorDepth::RGBA);
+		cel.pixels(&ColorDepth::RGBA);
 
 	}
 }
