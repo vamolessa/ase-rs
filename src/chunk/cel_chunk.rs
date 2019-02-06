@@ -38,11 +38,18 @@ pub struct CelChunk {
 }
 
 impl CelChunk {
-	pub fn new(layer_index: u16, x:i16, y:i16, w:u16, h:u16, pixels: Vec<RGBA256>) -> Self {
+	pub fn new(
+		layer_index: u16,
+		x:i16,
+		y:i16,
+		w:u16,
+		h:u16,
+		pixels: Pixels,
+	) -> Self {
 		let cel = Cel::RawCel {
 			width: w,
 			height: h,
-			pixels: Pixels::RGBA(pixels),
+			pixels,
 		};
 
 		Self {

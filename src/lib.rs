@@ -11,6 +11,7 @@ pub use self::chunk::*;
 
 pub mod color;
 pub mod helpers;
+pub use self::color::*;
 
 /*
 https://github.com/aseprite/aseprite/blob/master/docs/ase-file-specs.md

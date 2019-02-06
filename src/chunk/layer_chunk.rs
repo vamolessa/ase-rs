@@ -60,9 +60,12 @@ pub struct LayerChunk {
 }
 
 impl LayerChunk {
-	pub fn new(layer_name: &str) -> Self {
+	pub fn new(layer_name: &str, visible: bool) -> Self {
+
+		let mut flags = Flags::Editable;
+		if visible { flags |= Flags::Visible; }
 		LayerChunk {
-			flags: Flags::Visible | Flags::Editable,
+			flags,
 			layer_type: LayerType::Normal,
 			layer_child_level: 0,
 			blend_mode: BlendMode::Normal,
