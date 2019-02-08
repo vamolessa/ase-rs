@@ -27,6 +27,22 @@ pub enum Cel {
 }
 
 impl Cel {
+    pub fn w(&self) -> Option<u16> {
+        match &self {
+            Cel::CompressedImage {height,..} => Some(*height),
+            Cel::RawCel { height, .. } => Some(*height),
+            _ => None,
+        }
+    }
+
+    pub fn h(&self) -> Option<u16> {
+        match &self {
+            Cel::CompressedImage {width,..} => Some(*width),
+            Cel::RawCel { width, .. } => Some(*width),
+            _ => None,
+        }
+    }
+
     pub fn pixels(&self, color_depth: &ColorDepth) -> Option<Pixels> {
         match &self {
             Cel::CompressedImage {
