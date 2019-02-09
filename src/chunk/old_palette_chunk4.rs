@@ -22,7 +22,6 @@ impl OldPaletteChunk4 {
         R: Read,
     {
         let number_of_packets = read.read_u16::<LittleEndian>()?;
-        println!("num_packets: {}", number_of_packets);
         let mut packets = Vec::new();
 
         for _ in 0..number_of_packets {
