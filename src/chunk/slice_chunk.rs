@@ -61,7 +61,8 @@ impl SliceChunk {
             let y_origin = read.read_i32::<LittleEndian>()?;
             let width = read.read_u32::<LittleEndian>()?;
             let height = read.read_u32::<LittleEndian>()?;
-            let nine_patches_info = if flags.contains(Flags::IsNinePatchesSlice) {
+            let nine_patches_info = if flags.contains(Flags::IsNinePatchesSlice)
+            {
                 Some(NinePatchesInfo {
                     x_position: read.read_i32::<LittleEndian>()?,
                     y_position: read.read_i32::<LittleEndian>()?,

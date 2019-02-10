@@ -29,7 +29,7 @@ pub enum Cel {
 impl Cel {
     pub fn w(&self) -> Option<u16> {
         match &self {
-            Cel::CompressedImage {height,..} => Some(*height),
+            Cel::CompressedImage { height, .. } => Some(*height),
             Cel::RawCel { height, .. } => Some(*height),
             _ => None,
         }
@@ -37,7 +37,7 @@ impl Cel {
 
     pub fn h(&self) -> Option<u16> {
         match &self {
-            Cel::CompressedImage {width,..} => Some(*width),
+            Cel::CompressedImage { width, .. } => Some(*width),
             Cel::RawCel { width, .. } => Some(*width),
             _ => None,
         }
@@ -73,7 +73,14 @@ pub struct CelChunk {
 }
 
 impl CelChunk {
-    pub fn new(layer_index: u16, x: i16, y: i16, w: u16, h: u16, pixels: Pixels) -> Self {
+    pub fn new(
+        layer_index: u16,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16,
+        pixels: Pixels,
+    ) -> Self {
         let cel = Cel::RawCel {
             width: w,
             height: h,
@@ -98,13 +105,23 @@ impl CelChunk {
         R: Read + Seek,
     {
         match color_depth {
-            ColorDepth::Indexed => Pixels::indexed_from_read(read, pixels_size as usize),
-            ColorDepth::Grayscale => Pixels::grayscale_from_read(read, pixels_size as usize),
-            ColorDepth::RGBA => Pixels::rgba_from_read(read, pixels_size as usize),
+            ColorDepth::Indexed => {
+                Pixels::indexed_from_read(read, pixels_size as usize)
+            }
+            ColorDepth::Grayscale => {
+                Pixels::grayscale_from_read(read, pixels_size as usize)
+            }
+            ColorDepth::RGBA => {
+                Pixels::rgba_from_read(read, pixels_size as usize)
+            }
         }
     }
 
-    pub fn from_read<R>(read: &mut R, chunk_data_size: u32, header: &Header) -> io::Result<Self>
+    pub fn from_read<R>(
+        read: &mut R,
+        chunk_data_size: u32,
+        header: &Header,
+    ) -> io::Result<Self>
     where
         R: Read + Seek,
     {
@@ -120,10 +137,14 @@ impl CelChunk {
             0 => {
                 let width = read.read_u16::<LittleEndian>()?;
                 let height = read.read_u16::<LittleEndian>()?;
-                let pixels_size =
-                    chunk_start + chunk_data_size as u64 - read.seek(SeekFrom::Current(0))?;
+                let pixels_size = chunk_start + chunk_data_size as u64
+                    - read.seek(SeekFrom::Current(0))?;
 
-                let pixels = CelChunk::read_pixels(read, &header.color_depth, pixels_size)?;
+                let pixels = CelChunk::read_pixels(
+                    read,
+                    &header.color_depth,
+                    pixels_size,
+                )?;
                 Cel::RawCel {
                     width,
                     height,
@@ -137,9 +158,10 @@ impl CelChunk {
                 let width = read.read_u16::<LittleEndian>()?;
                 let height = read.read_u16::<LittleEndian>()?;
 
-                let data_size =
-                    chunk_start + chunk_data_size as u64 - read.seek(SeekFrom::Current(0))?;
-                let zlib_compressed_data = read_bytes(read, data_size as usize)?;
+                let data_size = chunk_start + chunk_data_size as u64
+                    - read.seek(SeekFrom::Current(0))?;
+                let zlib_compressed_data =
+                    read_bytes(read, data_size as usize)?;
                 Cel::CompressedImage {
                     width,
                     height,
@@ -212,13 +234,14 @@ mod tests {
     fn test_compression() {
         use super::*;
         let data = vec![
-            120, 156, 99, 96, 160, 61, 48, 72, 104, 250, 15, 194, 228, 232, 33, 21, 83, 170, 159,
-            24, 243, 209, 253, 66, 11, 183, 34, 203, 17, 19, 86, 248, 194, 153, 20, 119, 208, 42,
-            94, 240, 217, 75, 200, 95, 184, 220, 70, 138, 95, 41, 177, 139, 20, 63, 80, 98, 23,
-            169, 97, 70, 75, 127, 81, 219, 46, 92, 242, 212, 14, 67, 100, 49, 98, 210, 55, 185,
-            118, 145, 147, 14, 168, 237, 47, 90, 165, 67, 92, 118, 225, 83, 71, 172, 61, 196, 216,
-            69, 138, 89, 164, 218, 69, 110, 153, 64, 142, 60, 41, 128, 158, 118, 161, 3, 0, 164,
-            249, 126, 89,
+            120, 156, 99, 96, 160, 61, 48, 72, 104, 250, 15, 194, 228, 232, 33,
+            21, 83, 170, 159, 24, 243, 209, 253, 66, 11, 183, 34, 203, 17, 19,
+            86, 248, 194, 153, 20, 119, 208, 42, 94, 240, 217, 75, 200, 95,
+            184, 220, 70, 138, 95, 41, 177, 139, 20, 63, 80, 98, 23, 169, 97,
+            70, 75, 127, 81, 219, 46, 92, 242, 212, 14, 67, 100, 49, 98, 210,
+            55, 185, 118, 145, 147, 14, 168, 237, 47, 90, 165, 67, 92, 118,
+            225, 83, 71, 172, 61, 196, 216, 69, 138, 89, 164, 218, 69, 110,
+            153, 64, 142, 60, 41, 128, 158, 118, 161, 3, 0, 164, 249, 126, 89,
         ];
         let cel = Cel::CompressedImage {
             width: 0,

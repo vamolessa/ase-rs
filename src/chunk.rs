@@ -90,15 +90,30 @@ impl Chunk {
         let chunk_data_size = chunk_size - 4 - 2;
 
         let chunk_data = match chunk_type {
-            0x0004 => ChunkData::OldPaletteChunk4(OldPaletteChunk4::from_read(read)?),
-            0x0011 => ChunkData::OldPaletteChunk11(OldPaletteChunk11::from_read(read)?),
+            0x0004 => {
+                ChunkData::OldPaletteChunk4(OldPaletteChunk4::from_read(read)?)
+            }
+            0x0011 => ChunkData::OldPaletteChunk11(
+                OldPaletteChunk11::from_read(read)?,
+            ),
             0x2004 => ChunkData::LayerChunk(LayerChunk::from_read(read)?),
-            0x2005 => ChunkData::CelChunk(CelChunk::from_read(read, chunk_data_size, header)?),
+            0x2005 => ChunkData::CelChunk(CelChunk::from_read(
+                read,
+                chunk_data_size,
+                header,
+            )?),
             0x2006 => ChunkData::CelExtraChunk(CelExtraChunk::from_read(read)?),
-            0x2007 => ChunkData::ColorProfileChunk(ColorProfileChunk::from_read(read)?),
+            0x2007 => ChunkData::ColorProfileChunk(
+                ColorProfileChunk::from_read(read)?,
+            ),
             0x2016 => ChunkData::MaskChunk(MaskChunk::from_read(read)?),
-            0x2017 => ChunkData::PathChunk(PathChunk::from_read(read, chunk_data_size)?),
-            0x2018 => ChunkData::FrameTagsChunk(FrameTagsChunk::from_read(read)?),
+            0x2017 => ChunkData::PathChunk(PathChunk::from_read(
+                read,
+                chunk_data_size,
+            )?),
+            0x2018 => {
+                ChunkData::FrameTagsChunk(FrameTagsChunk::from_read(read)?)
+            }
             0x2019 => ChunkData::PaletteChunk(PaletteChunk::from_read(read)?),
             0x2020 => ChunkData::UserDataChunk(UserDataChunk::from_read(read)?),
             0x2022 => ChunkData::SliceChunk(SliceChunk::from_read(read)?),

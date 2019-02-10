@@ -18,7 +18,8 @@ where
 {
     let length = read.read_u16::<LittleEndian>()? as usize;
     let bytes = read_bytes(read, length)?;
-    String::from_utf8(bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+    String::from_utf8(bytes)
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
 }
 
 pub fn write_string<W>(wtr: &mut W, string: &str) -> io::Result<()>

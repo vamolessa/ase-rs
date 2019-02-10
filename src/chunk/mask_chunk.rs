@@ -25,7 +25,8 @@ impl MaskChunk {
         let height = read.read_u16::<LittleEndian>()?;
         read.seek(SeekFrom::Current(8))?;
         let mask_name = read_string(read)?;
-        let bitmap_data = read_bytes(read, (height * (width + 7) / 8) as usize)?;
+        let bitmap_data =
+            read_bytes(read, (height * (width + 7) / 8) as usize)?;
 
         Ok(Self {
             x_position,

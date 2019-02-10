@@ -38,7 +38,10 @@ pub enum Pixels {
 }
 
 impl Pixels {
-    pub fn rgba_from_read<R>(read: &mut R, pixels_size: usize) -> io::Result<Self>
+    pub fn rgba_from_read<R>(
+        read: &mut R,
+        pixels_size: usize,
+    ) -> io::Result<Self>
     where
         R: Read,
     {
@@ -46,7 +49,10 @@ impl Pixels {
         if pixels_size % BYTES_PER_PIXEL != 0 {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
-                format!("Pixels size is not multiple of 4 (RGBA): {}", pixels_size),
+                format!(
+                    "Pixels size is not multiple of 4 (RGBA): {}",
+                    pixels_size
+                ),
             ));
         }
 
@@ -64,7 +70,10 @@ impl Pixels {
         Ok(Pixels::RGBA(pixels))
     }
 
-    pub fn grayscale_from_read<R>(read: &mut R, pixels_size: usize) -> io::Result<Self>
+    pub fn grayscale_from_read<R>(
+        read: &mut R,
+        pixels_size: usize,
+    ) -> io::Result<Self>
     where
         R: Read,
     {
@@ -92,7 +101,10 @@ impl Pixels {
         Ok(Pixels::Grayscale(pixels))
     }
 
-    pub fn indexed_from_read<R>(read: &mut R, pixels_size: usize) -> io::Result<Self>
+    pub fn indexed_from_read<R>(
+        read: &mut R,
+        pixels_size: usize,
+    ) -> io::Result<Self>
     where
         R: Read,
     {

@@ -112,7 +112,12 @@ impl Header {
         })
     }
 
-    pub fn write<W>(&self, wtr: &mut W, frame_bytes: u32, frame_len: u16) -> io::Result<()>
+    pub fn write<W>(
+        &self,
+        wtr: &mut W,
+        frame_bytes: u32,
+        frame_len: u16,
+    ) -> io::Result<()>
     where
         W: Write + Seek,
     {
