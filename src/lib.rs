@@ -1,3 +1,4 @@
+#![allow(non_upper_case_globals)]
 use std::io::{self, Cursor, Read, Seek, Write};
 
 pub mod header;

@@ -3,9 +3,8 @@ use std::io::{self, Cursor, Read, Seek, SeekFrom, Write};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use flate2::read::ZlibDecoder;
-use std::io::prelude::*;
 
-use crate::color::{Pixels, RGBA256};
+use crate::color::{Pixels};
 use crate::helpers::read_bytes;
 use crate::{ColorDepth, Header};
 
