@@ -35,6 +35,7 @@ impl FrameTagsChunk {
         R: Read + Seek,
     {
         let number_of_tags = read.read_u16::<LittleEndian>()?;
+        read.seek(SeekFrom::Current(8))?;
         let mut tags = Vec::with_capacity(number_of_tags as usize);
 
         for _ in 0..number_of_tags {
