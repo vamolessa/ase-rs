@@ -74,6 +74,7 @@ impl FrameTagsChunk {
         W: Write + Seek,
     {
         wtr.write_u16::<LittleEndian>(self.number_of_tags)?;
+        wtr.seek(SeekFrom::Current(8))?;
         for tag in &self.tags {
             wtr.write_u16::<LittleEndian>(tag.from_tag)?;
             wtr.write_u16::<LittleEndian>(tag.to_tag)?;
